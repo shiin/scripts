@@ -52,7 +52,7 @@ function clone()
 
    echo "Clone $mod ..."
 
-   local REPO="http://git.enlightenment.org"
+   local REPO="https://git.enlightenment.org"
 
    [ -z "$mod_path" ] && GIT_URI=$REPO/$mod".git" || GIT_URI=$REPO/$mod_path/$mod".git"
 
@@ -127,7 +127,8 @@ function build()
 
    case $mod in
       efl )
-         mod_config_options="--enable-ecore-buffer"
+         mod_config_options=""
+#         mod_config_options="--enable-ecore-buffer"
 #         mod_config_options="--enable-ecore-buffer --enable-always-build-examples"
          ;;
       *)
@@ -172,8 +173,6 @@ E_MODULES=$@
 
 [ -z "$E_MODULES" ] && E_MODULES=" \
    efl \
-   emotion_generic_players \
-   evas_generic_loaders \
    enlightenment \
    terminology \
    rage \
