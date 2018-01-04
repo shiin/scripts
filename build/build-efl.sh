@@ -123,6 +123,7 @@ function build()
     local mod_path=$2
     local mod=$3
     local mod_config_options=""
+    local is_meson="no"
     echo "Build $mod ..."
 
     case $mod in
@@ -131,6 +132,9 @@ function build()
             #         mod_config_options="--enable-ecore-buffer"
             #         mod_config_options="--enable-ecore-buffer --enable-always-build-examples"
             ;;
+        enlightenment | terminology )
+            is_meson="yes"
+            ;;
         *)
             mod_config_options=""
             ;;
@@ -138,15 +142,22 @@ function build()
 
     _pushd $repo_path/$mod_path/$mod
 
-    [ ! -f Makefile ] && E_NO_CONFIGURE=""
-    if [ -z "$E_NO_CONFIGURE" ] && [ -x ./autogen.sh ]; then
-        rm -f m4/libtool.m4
-        NOCONFIGURE=1 ./autogen.sh >> build.log 2>&1 || die "mod: error running autogen.sh"
-        ./configure $CONFIG_OPTIONS $mod_config_options $E_CONFIG_OPTIONS >> build.log 2>&1 || die "$mod: error running configure"
+    if [ $is_meson = "yes" ]; then
+        meson . build >> build.log 2>&1 || die "meson: error running build"
+        ninja -C build >> build.log 2>&1 || die "ninja: error running build"
+        sudo ninja -C build install 2>&1 || die "ninja: error running install"
+    else
+        [ ! -f Makefile ] && E_NO_CONFIGURE=""
+        if [ -z "$E_NO_CONFIGURE" ] && [ -x ./autogen.sh ]; then
+            rm -f m4/libtool.m4
+            NOCONFIGURE=1 ./autogen.sh >> build.log 2>&1 || die "mod: error running autogen.sh"
+            ./configure $CONFIG_OPTIONS $mod_config_options $E_CONFIG_OPTIONS >> build.log 2>&1 || die "$mod: error running configure"
+        fi
+
+        $MAKE >> build.log 2>&1 || die "$mod: error building"
+        sudo $MAKE -j 1 install >> build.log 2>&1 || die "$mod: error installing"
     fi
 
-    $MAKE >> build.log 2>&1 || die "$mod: error building"
-    sudo $MAKE -j 1 install >> build.log 2>&1 || die "$mod: error installing"
     _popd
     sudo ldconfig
 }
