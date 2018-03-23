@@ -1,12 +1,16 @@
 #!/bin/bash
 
-# Required version 16.01 or later.
+# Required version 16.04 or later.
 
 # Build essential
 sudo apt install autoconf autopoint ctags cscope gitk
 
 # useful tools
 sudo apt install trash-cli
+
+# meson - Updated on Ubuntu 16.04
+sudo apt install python3-pip
+pip3 install meson
 
 # Required building EFL library.
 sudo apt install ccache libtool check libssl-dev libsystemd-dev libjpeg-dev libglib2.0-dev libgstreamer1.0-dev libluajit-5.1-dev libfreetype6-dev libfontconfig1-dev libfribidi-dev
