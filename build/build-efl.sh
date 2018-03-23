@@ -96,7 +96,7 @@ function prepare_build() {
 
     local arch=`which arch`
     [ $? -eq 0 ]          && ARCH=`$arch`           || ARCH=""
-    [ $ARCH == "x86_64" ] && LIBDIR="$PREFIX/lib64" || LIBDIR="$PREFIX/lib"
+    [ $ARCH == "x86_64" ] && LIBDIR="$PREFIX/lib" || LIBDIR="$PREFIX/lib"
     [ $PREFIX == "/usr/local" ] && SYSCONFDIR="/etc"      || SYSCONFDIR="$PREFIX/etc"
     [ $PREFIX == "/usr/local" ] && LOCALSTATEDIR="/var"   || LOCALSTATEDIR="$PREFIX/var"
 
@@ -132,8 +132,13 @@ function build()
             #         mod_config_options="--enable-ecore-buffer"
             #         mod_config_options="--enable-ecore-buffer --enable-always-build-examples"
             ;;
-        enlightenment | terminology )
+        enlightenment )
             is_meson="yes"
+            mod_config_options="pam=false" # 2018-03-23 disable pam
+            ;;
+        terminology )
+            is_meson="yes"
+            mod_config_options=""
             ;;
         *)
             mod_config_options=""
@@ -143,7 +148,7 @@ function build()
     _pushd $repo_path/$mod_path/$mod
 
     if [ $is_meson = "yes" ]; then
-        meson . build >> build.log 2>&1 || die "meson: error running build"
+        meson . build -D $mod_config_options >> build.log 2>&1 || die "meson: error running build"
         ninja -C build >> build.log 2>&1 || die "ninja: error running build"
         sudo ninja -C build install 2>&1 || die "ninja: error running install"
     else
