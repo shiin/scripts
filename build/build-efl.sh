@@ -196,6 +196,10 @@ E_MODULES=$@
     enventor \
     "
 
+if [[ -e /usr/local/bin/enlightenment ]]; then
+    first=false
+fi
+
 if [ -z "$NO_CLEANUP" ]; then
     run_all cleanup
 fi
@@ -207,4 +211,8 @@ fi
 if [ -z "$NO_BUILD" ]; then
     prepare_build
     run_all build
+fi
+
+if [[ "$first" == true ]]; then
+   sudo cp /usr/local/share/xsessions/enlightenment.desktop /usr/share/xsessions/enlightenment.desktop
 fi
