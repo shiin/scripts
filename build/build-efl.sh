@@ -134,7 +134,6 @@ function build()
             ;;
         enlightenment )
             is_meson="yes"
-            mod_config_options="pam=false" # 2018-03-23 disable pam
             ;;
         terminology )
             is_meson="yes"
@@ -148,7 +147,7 @@ function build()
     _pushd $repo_path/$mod_path/$mod
 
     if [ $is_meson = "yes" ]; then
-        meson . build -D $mod_config_options >> build.log 2>&1 || die "meson: error running build"
+        meson . build $mod_config_options >> build.log 2>&1 || die "meson: error running build"
         ninja -C build >> build.log 2>&1 || die "ninja: error running build"
         sudo ninja -C build install 2>&1 || die "ninja: error running install"
     else
