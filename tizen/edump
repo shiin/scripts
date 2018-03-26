@@ -1,0 +1,20 @@
+#!/bin/bash
+
+OPT=$1
+TARGET_TEMP_DIR=/var/edump
+HOST_TEMP_DIR=$HOME/temp/dump
+
+if [ ! -d $HOST_TEMP_DIR ]; then
+   /bin/mkdir -p $HOST_TEMP_DIR
+fi
+
+sdb $OPT shell mkdir -p $TARGET_TEMP_DIR
+LOG=`sdb $OPT shell enlightenment_info -dump topvwins $TARGET_TEMP_DIR`
+DUMP_DIR=`echo $LOG | awk '{print $2}' | sed -e 's/\\r//'`
+
+sdb $OPT pull $DUMP_DIR $HOST_TEMP_DIR
+eog $HOST_TEMP_DIR/*
+
+# Clean up
+rm $HOST_TEMP_DIR/*
+sdb $OPT shell rm -rf $DUMP_DIR
