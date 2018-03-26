@@ -3,7 +3,10 @@
 # Required version 16.04 or later.
 
 # Build essential
-sudo apt install autoconf autopoint ctags cscope gitk
+sudo apt install autoconf autopoint ctags cscope gitk vim
+
+echo ""
+echo "alias vi='vim' >> $HOME/.bashrc"
 
 # useful tools
 sudo apt install trash-cli lynx
