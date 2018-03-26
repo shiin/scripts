@@ -6,7 +6,7 @@
 sudo apt install autoconf autopoint ctags cscope gitk
 
 # useful tools
-sudo apt install trash-cli
+sudo apt install trash-cli lynx
 
 # meson - Updated on Ubuntu 16.04
 sudo apt install python3-pip
