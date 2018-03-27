@@ -197,6 +197,27 @@ E_MODULES=$@
 
 if [[ -e /usr/local/bin/enlightenment ]]; then
     first=false
+else
+    # Required building EFL library.
+    sudo apt install ccache libtool check libssl-dev libsystemd-dev libjpeg-dev \
+        libglib2.0-dev libgstreamer1.0-dev libluajit-5.1-dev libfreetype6-dev \
+        libfontconfig1-dev libfribidi-dev
+
+    sudo apt install libx11-dev libxcursor-dev libxrender-dev libxrandr-dev \
+        libxfixes-dev libxdamage-dev libxcomposite-dev libxss-dev libxpresent-dev \
+        libxext-dev libxinerama-dev libxkbfile-dev libxtst-dev libxcb1-dev \
+        libxcb-shape0-dev libxcb-keysyms1-dev libglu1-mesa-dev freeglut3-dev \
+        mesa-common-dev libgif-dev libtiff5-dev libpoppler-cpp-dev libspectre-dev \
+        libraw-dev librsvg2-dev libcairo2-dev libudev-dev libblkid-dev libmount-dev \
+        libdbus-1-dev libpulse-dev libsndfile1-dev libbullet-dev \
+        libgstreamer-plugins-base1.0-dev
+
+    sudo apt install libpam0g-dev   # Required for Enlightenment
+
+    # Required for meson which is needed for building Enlightenment
+    pip3 install --upgrade pip
+    pip3 install meson
+    sudo apt install ninja-build
 fi
 
 if [ -z "$NO_CLEANUP" ]; then
@@ -212,6 +233,6 @@ if [ -z "$NO_BUILD" ]; then
     run_all build
 fi
 
-if [[ "$first" == true ]]; then
+if [[ "$first" == "true" ]]; then
    sudo cp /usr/local/share/xsessions/enlightenment.desktop /usr/share/xsessions/enlightenment.desktop
 fi
