@@ -10,6 +10,7 @@ echo "alias vi='vim' >> $HOME/.bashrc"
 
 # useful tools
 sudo apt install trash-cli lynx
+sudo apt install openssh-server # For using PuTTY in Windows
 
 # meson - Updated on Ubuntu 16.04
 sudo apt install python3-pip
