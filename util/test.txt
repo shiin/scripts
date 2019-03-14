@@ -1,0 +1,16 @@
+info: finished building enlightenment
+info: updating local repo
+info: *** Build Status Summary ***
+=== Total succeeded built packages: (1) ===
+info: generated html format report:
+/home/prado/GBS-ROOT/enlightenment/local/repos/public/armv7l/index.html
+info: generated RPM packages can be found from local repo:
+/home/prado/GBS-ROOT/enlightenment/local/repos/public/armv7l/RPMS
+info: generated source RPM packages can be found from local repo:
+/home/prado/GBS-ROOT/enlightenment/local/repos/public/armv7l/SRPMS
+info: build logs can be found in:
+/home/prado/GBS-ROOT/enlightenment/local/repos/public/armv7l/logs
+info: build roots located in:
+/home/prado/GBS-ROOT/enlightenment/local/BUILD-ROOTS/scratch.armv7l.*
+info: Done
+

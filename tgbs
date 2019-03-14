@@ -1,0 +1,128 @@
+#!/bin/bash
+# ---------------------------------------------------------------------------
+# tgbs - A convinient tool for GBS
+
+# Copyright 2019, Seunghun,,, <prado@Prado-Linux>
+# All rights reserved.
+
+# Usage: tgbs [-h|--help] [-a ARCH] [-p PROFILE]
+
+# Revision history:
+# 2019-02-26 Created by new_script ver. 3.3
+# ---------------------------------------------------------------------------
+
+PROGNAME=${0##*/}
+VERSION="0.1"
+
+clean_up() { # Perform pre-exit housekeeping
+  return
+}
+
+error_exit() {
+  echo -e "${PROGNAME}: ${1:-"Unknown Error"}" >&2
+  clean_up
+  exit 1
+}
+
+graceful_exit() {
+  clean_up
+  exit
+}
+
+signal_exit() { # Handle trapped signals
+  case $1 in
+    INT)
+      error_exit "Program interrupted by user" ;;
+    TERM)
+      echo -e "\n$PROGNAME: Program terminated" >&2
+      graceful_exit ;;
+    *)
+      error_exit "$PROGNAME: Terminating on unknown signal" ;;
+  esac
+}
+
+usage() {
+  echo -e "Usage: $PROGNAME [-h|--help] [-a ARCH] [-p PROFILE]"
+}
+
+help_message() {
+  cat <<- _EOF_
+  $PROGNAME ver. $VERSION
+  A convinient tool for GBS
+
+  $(usage)
+
+  Options:
+  -h, --help  Display this help message and exit.
+  -a ARCH  build target arch
+    Where 'ARCH' is the .
+  -p PROFILE  profile to be used for building
+    Where 'PROFILE' is the .
+
+_EOF_
+  return
+}
+
+# Trap signals
+trap "signal_exit TERM" TERM HUP
+trap "signal_exit INT"  INT
+
+# Default value
+GBS_ROOT_PATH=$HOME/.GBS-ROOT
+ARCH="armv7l"
+PROFILE="profile.public"
+BUILD_OPT="--include-all"
+LOG_PATH=/tmp/gbs.log
+
+# Main logic
+if [[ ! -d .git ]]; then
+    error_exit "Not a git directory"
+fi
+
+# Parse command-line
+while [[ -n $1 ]]; do
+  case $1 in
+    -h | --help)
+      help_message; graceful_exit ;;
+    -a)
+      shift; ARCH="$1" ;;
+    -p)
+      shift; PROFILE="profile.${1}" ;;
+    -o)
+      shift; BUILD_OPT="$1" ;;
+    -b)
+      shift; PKG_NAME="$1" ;;
+    -* | --*)
+      usage
+      error_exit "Unknown option $1" ;;
+    *)
+      echo "Argument $1 to process..." ;;
+  esac
+  shift
+done
+
+if [[ $PKG_NAME == "" ]]; then
+    PKG_NAME=`pwd | awk -F "/" '{print $NF}'`
+fi
+
+BUILD_PATH=$GBS_ROOT_PATH/$PKG_NAME
+
+echo "Build..."
+gbs build -A $ARCH -B $BUILD_PATH -P $PROFILE $BUILD_OPT | tee $LOG_PATH
+
+if [[ $? -ne 0 ]]; then
+    error_exit "Build failed: for details, see '${LOG_PATH}'"
+fi
+
+RPMS_STR="generated RPM packages can be found from local repo:"
+RPMS_PATH=`cat ${LOG_PATH} | grep -A 1 "${RPMS_STR}" | grep -v "${RPMS_STR}" | tr -d [:space:]`
+echo $RPMS_PATH
+
+TARGET_RPM_PATH="/home/rpms"
+sdb push ${RPMS_PATH}/ $TARGET_RPM_PATH/
+sdb shell "rpm --force --nodeps -ivh ${TARGET_RPM_PATH}/*"
+sdb shell 'sync'
+#sdb shell 'reboot -f'
+
+graceful_exit
+

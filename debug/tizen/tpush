@@ -1,0 +1,51 @@
+#!/bin/sh
+
+ARCH=$1
+NAME=$2
+
+SUBDIR=""
+
+if [ "$ARCH" = "armv7l" ]; then
+   SDB_OPTION="-d"
+   SUBDIR=scratch.armv7l.0
+elif [ "$ARCH" = "i586" ]; then
+   SDB_OPTION="-e"
+   SUBDIR=scratch.i586.0
+else
+   echo Usage: $0 "[ARCH] [BUILD_ROOT_DIR]"
+   exit
+fi
+
+PKG_DIR=$HOME/GBS-ROOT/${NAME}/local/BUILD-ROOTS/${SUBDIR}/home/abuild/rpmbuild/RPMS/${ARCH}/
+
+sdb $SDB_OPTION root on
+sdb $SDB_OPTION push $PKG_DIR /home/app/
+
+if [ $ARCH = "armv7l" ]; then
+   sdb $SDB_OPTION shell 'mount -o remount,rw /'
+fi
+
+sdb $SDB_OPTION shell 'rpm --force --nodeps -Uvh /home/app/*.rpm'
+sdb $SDB_OPTION shell 'rm /home/app/*.rpm'
+#sdb $SDB_OPTION shell 'smack_reload.sh'
+sdb $SDB_OPTION shell 'sync'
+
+echo -n "Do you want to reboot target? [Y/N] "
+read usr_input
+
+case "$usr_input" in
+   [yY] )
+      echo "Rebooting target"
+      sdb $SDB_OPTION shell 'reboot'
+      ;;
+   [nN] )
+      exit 0
+      ;;
+   *)
+      exit 0
+      ;;
+esac
+
+#echo "target rebooting...."
+#sleep 3
+#sdb $SDB_OPTION shell 'reboot'

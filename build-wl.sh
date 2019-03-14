@@ -167,9 +167,6 @@ function build()
             --enable-xwayland --disable-xorg --disable-xvfb --disable-xnest \
             --disable-xquartz --disable-xwin"
          ;;
-      weston )
-         mod_config_options="--enable-libinput-backend --disable-setuid-install"
-         ;;
       efl )
          mod_config_options="--with-systemdunitdir=$WLD/etc/efl --enable-drm --enable-wayland --enable-systemd --enable-egl --with-opengl=es"
          ;;
@@ -245,14 +242,6 @@ function run_all()
 E_MODULES=$@
 
 [ -z "$E_MODULES" ] && E_MODULES=" \
-   wayland \
-   wayland-protocols \
-   pthread-stubs \
-   drm \
-   macros \
-   mesa \
-   libevdev \
-   libinput \
    libunwind \
    weston \
 "
@@ -292,6 +281,28 @@ sudo apt install x11proto-xcmisc-dev x11proto-bigreqs-dev x11proto-randr-dev \
 # XWAYLANDMODULES="wayland-client >= 1.3.0 libdrm epoxy"
 sudo apt install libepoxy-dev # this error message is uninformative
 
+# For llvm-7 required by mesa - Ubuntu 16.04
+APT_FILE=/etc/apt/source.list
+LLVM_SYM="# For llvm"
+
+grep ${LLVM_SYM} ${APT_FILE} > /dev/null 2>&1
+if [[ $? -ne 0 ]]; then
+    wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add
+
+    sudo sh -c 'echo "# For llvm-7" >> $APT_FILE"'
+    sudo sh -c 'echo "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial main" >> $APT_FILE'
+    sudo sh -c 'echo "deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial main" >> $APT_FILE'
+    # 6
+    sudo sh -c 'echo "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main" >> $APT_FILE'
+    sudo sh -c 'echo "deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main" >> $APT_FILE'
+    # 7
+    sudo sh -c 'echo "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main" >> $APT_FILE'
+    sudo sh -c 'echo "deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main" >> $APT_FILE'
+
+    sudo apt install libllvm-7-ocaml-dev libllvm7 llvm-7 llvm-7-dev llvm-7-doc llvm-7-examples llvm-7-runtime
+fi
+
+
 if [ -z "$NO_CLEANUP" ]; then
    run_all cleanup
 fi
@@ -303,21 +314,21 @@ fi
 if [ -z "$NO_BUILD" ]; then
    prepare_build
    # No package 'xfont2' found
-   git clone git://anongit.freedesktop.org/xorg/lib/libXfont $HOME/repos/wayland/libXfont
-   pushd $HOME/repos/wayland/libXfont
-   ./autogen.sh --prefix=$WLD
-   make check
-   make && make install
-   popd
+   #git clone git://anongit.freedesktop.org/xorg/lib/libXfont $HOME/repos/wayland/libXfont
+   #pushd $HOME/repos/wayland/libXfont
+   #./autogen.sh --prefix=$WLD
+   #make check
+   #make && make install
+   #popd
 
-   git clone git://anongit.freedesktop.org/xorg/xserver $HOME/repos/wayland/xserver
-   pushd $HOME/repos/wayland/xserver
-   ./autogen.sh --prefix=$WLD --disable-docs --disable-devel-docs \
-      --enable-xwayland --disable-xorg --disable-xvfb --disable-xnest \
-      --disable-xquartz --disable-xwin
-   make check
-   make && make install
-   popd
+   #git clone git://anongit.freedesktop.org/xorg/xserver $HOME/repos/wayland/xserver
+   #pushd $HOME/repos/wayland/xserver
+   #./autogen.sh --prefix=$WLD --disable-docs --disable-devel-docs \
+   #   --enable-xwayland --disable-xorg --disable-xvfb --disable-xnest \
+   #   --disable-xquartz --disable-xwin
+   #make check
+   #make && make install
+   #popd
 
    run_all build
 fi

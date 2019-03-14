@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# ex) $ tgbs armv7l 
+
+set -ex
+
+PKG_NAME=`pwd | awk -F '/' '{print $NF}'`
+BASE_BUILD_ROOT=$HOME/GBS-ROOT
+BUILD_ROOT=$BASE_BUILD_ROOT/$PKG_NAME
+DEFAULT_ARCH=armv7l
+DEFAULT_PROFILE=public
+DEFAULT_OPT="--include-all --keep-packs"
+RPM_PATH_INFO_MESSAGE="info: generated RPM packages can be found from local repo:"
+
+
+function die()
+{             
+   echo "fatal: "$@   
+   exit 1    
+}
+
+function ask_yes_no
+{
+   #####
+   #     Function to ask a yes/no question
+   #     Arguments:
+   #           1     prompt string (optional)
+   #####
+
+   local yn=
+
+   while [ "$yn" = "" ]; do
+      echo -en "$1"
+      read yn
+      case $yn in
+         y|Y)  yn=0 ;;
+         n|N)  yn=1 ;;
+         *)    yn=
+               echo "Invalid respose - please answer y or n"
+               ;;
+      esac
+   done
+   return $yn
+}
+
+if [ ! -d $PWD/.git ]; then
+   die "Not a git repository"
+fi
+
+if [ $PKG_NAME == "enlightenment" ]; then
+
+fi
+
+output=$(gbs build -B ${BUILD_ROOT} -A ${DEFAULT_ARCH} -P profile.${DEFAULT_PROFILE} ${DEFAULT_OPT} 2>&1 | tee /dev/tty)
+notify-send 'TGBS' 'Complete GBS build'
+
+ask_yes_no "Do you want to install package? "
+if [ $? != 0 ]
+   exit 0
+
+echo $output | grep "info: generated RPM packages can be found from local repo:" -A 1 | mawk 'FNR==2{print $0}' | tr -d '[:space:]'
+

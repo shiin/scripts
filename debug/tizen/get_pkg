@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -ex
+
+if [ $# != 3 ]; then
+   echo "Usage: get_pkg [URL] [PACKAGE_NAME] [DEST_DIR]"
+   echo ""
+   exit
+fi
+URL=$1
+pkg=$2
+dir=$3
+
+
+lynx -dump ${URL} | grep ${pkg} | awk '{print $2}' >> pkg_list
+
+sed 's/\r//g' pkg_list > pkg_list2
+
+for x in $(cat pkg_list2)
+do
+   wget --directory-prefix=$dir $x
+done
+
+#rm pkg_list

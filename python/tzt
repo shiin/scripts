@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+
+from time import sleep
+from bcolors import bcolors
+from pprint import pprint
+from pathlib import Path
+import os
+import sys
+from argparse import ArgumentParser
+import re
+import subprocess
+import urllib3
+from urllib.parse import urljoin
+from bs4 import BeautifulSoup
+
+try:
+    from subprocess import DEVNULL
+except ImportError:
+    import os
+    DEVNULL = open(os.devnull, 'wb')
+
+SDB = 'sdb'
+TEMP_PATH = os.path.join(str(Path.home()), 'temp', 'tizen')
+TIZEN_TEMP_PATH = '/home/tmp'
+TM1_MEDIA_PATH = '/opt/usr/home/owner/media/Videos/'
+TM1_SNAPSHOTS_URL = 'http://cdn.download.tizen.org/snapshots/tizen/unified/'
+TM1_SNAPSHOT_SUB_URL = 'images/standard/mobile-wayland-armv7l-tm1'
+
+class RemoteManager():
+    def __init__(self):
+        self.http = urllib3.PoolManager()
+        self.chunk_size = 8192
+
+    def get_link_list(self, url):
+        output = []
+
+        response = self.http.request('GET', url)
+        soup = BeautifulSoup(response.data, 'html.parser')
+        links = soup.find_all('a')
+
+        for link in links:
+            output.append(link.get('href'))
+
+        return output
+
+    def download(self, url, path):
+        fname = url.split('/')[-1]
+        fpath = os.path.join(path, fname)
+        if os.path.exists(fpath):
+            print(bcolors.CYAN + 'File is already exist: %s' % (fpath) + bcolors.ENDC)
+            return fpath
+
+        response = self.http.request('GET', url, preload_content=False)
+        meta = response.info()
+        fsize = int(meta.getheaders("Content-Length")[0])
+        print(bcolors.GREEN + "Downloading: %s Bytes: %s" % (fname, fsize) + bcolors.ENDC)
+
+
+        fsize_dl = 0
+        chunk_size = self.chunk_size
+        with open(fpath, 'wb') as out:
+            while True:
+                data = response.read(chunk_size)
+                if not data:
+                    break
+                fsize_dl += len(data)
+                out.write(data)
+                status = r'%10d  [%3.2f%%]' % (fsize_dl, fsize_dl * 100. / fsize)
+                status = status + chr(8) * (len(status) + 1)
+                print(status, end='\r')
+        response.release_conn()
+
+        return fpath
+
+
+class Lthor():
+    def __init__(self):
+        self.retry = 20
+
+    def is_connected(self):
+        ret_code = subprocess.call(['lthor', '-c'], stdout=DEVNULL, stderr=DEVNULL)
+        return ret_code is 0
+
+    def wait(self):
+        retry = self.retry
+        while self.is_connected() == False and retry > 0:
+            print(bcolors.RED + 'Please connect device properly to continue (retry = %d)' %
+                    retry + bcolors.ENDC, end='\r')
+            retry -= 1
+            sleep(1)
+        print('')
+        return self.is_connected()
+
+    def install(self, fpath):
+        if self.is_connected() == False:
+            print(bcolors.RED + 'Unable to connect device' + bcolors.ENDC)
+            return False
+
+        return subprocess.call(['lthor', fpath]) is 0
+
+class Sdb():
+    def __init__(self):
+        self.start_server()
+
+    def start_server(self):
+        cmd = [SDB, 'start-server']
+        ret_code = subprocess.call(cmd, stdout=DEVNULL, stderr=DEVNULL)
+        return ret_code is 0
+
+    def get_connected_device_list(self):
+        """
+            row[N] : Nth device
+            col[0] : serial
+            col[1] : state
+            col[2] : name
+        """
+        device_list = []
+
+        cmd = [SDB, 'devices']
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        out = proc.stdout.read().decode('utf-8')
+        proc.stdout.close()
+
+        # remove head and tail
+        dlist = out.split('\n')[1:-1]
+        for row in dlist:
+            # remove tab
+            device = row.split('\t')
+            # remove space
+            device = [x.strip(' ') for x in device]
+            device_list.append(device)
+
+        return device_list if len(device_list) != 0 else None
+
+    def is_serial_connected(self, serial):
+        cmd = [SDB, '-s', serial, 'get-state']
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        out = proc.stdout.read().decode('utf-8')
+        proc.stdout.close()
+
+        return re.search("device", out) is not None
+
+    def __set_root(self, serial, on):
+        arg = 'on' if on == True else 'off'
+        return subprocess.call([SDB, '-s', serial, 'root', arg], stdout=DEVNULL, stderr=DEVNULL)
+
+    def root_on(self, serial):
+        self.__set_root(serial, True)
+
+    def root_off(self, serial):
+        self.__set_root(serial, False)
+
+def media_file_push():
+    sdb = Sdb()
+    print(sdb.get_connected_device_list())
+
+def flash():
+    remote = RemoteManager()
+    url = urljoin(TM1_SNAPSHOTS_URL, 'latest/')
+    url = urljoin(url, TM1_SNAPSHOT_SUB_URL)
+    print(url)
+    link_list = remote.get_link_list(url)
+    print(link_list)
+    for link in link_list:
+        if re.search('tar\.gz$', link) is not None:
+            url = os.path.join(url, link)
+            image_path = remote.download(url, TEMP_PATH)
+            lthor = Lthor()
+            lthor.install(image_path)
+            break
+
+def cmd_tm1(args):
+    print(args.flash)
+
+def tm1_parse(parser):
+    subparser = parser.add_parser('tm1')
+    subparser.add_argument('--flash', type=str, default='latest')
+    subparser.set_defaults(func=cmd_tm1)
+
+def main(argv):
+    epilog = "Try 'tzt SUBCOMMAND --help' for help on a specific subcommand."
+    description = "tzt - the command line tool for Tizen developers."
+    parser = ArgumentParser(description=description, epilog=epilog)
+
+    parser.format_usage = parser.format_help
+
+    args = parser.parse_args(argv[1:])
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main(sys.argv))
+    except KeyboardInterrupt:
+        print('^C caught, program aborted.')

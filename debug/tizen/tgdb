@@ -1,0 +1,75 @@
+#!/bin/bash
+
+source helper_tizen.sh
+source helper_util.sh
+
+trap "exit;" SIGINT
+
+name=$1
+noti=false
+conn=false
+process=false
+
+function run_target()
+{
+   #####
+   #     Function to run command on sdb target
+   #     Arguments:
+   #           1        command to run
+   #####
+   local ret=
+   ret=`sdb -d shell '${1}'`
+   return ${ret}
+}
+
+function check_gdb()
+{
+   #####
+   #     Function to check if gdb is existed on target
+   #     No arguments
+   #####
+   run_target 'rpm -qa | grep gdb-'
+   return ${?}
+}
+
+if [ $# -eq 0 ]; then
+   echo "`basename ${0}`: missing program name" >&2
+   echo "Usage: `basename ${0}` [PROGRAM name]"
+   exit
+fi
+
+while [ 1 ]
+do
+   if [[ ${conn} = "false" ]]; then
+      if is_connect; then
+         conn=true
+      else
+         echo -n "basename ${0}: Waiting for connecting sdb"
+         echo -ne "\r"
+      fi
+   else
+      sdb root on
+      pid=`$SDB_SHELL "pidof ${name}"`
+      if [[ ${?} -eq 0 ]]; then
+         if [[ ! -z ${pid} ]]; then
+            pid=`echo ${pid} | tr -d '[:space:]'`
+            if query_pkg "gdb"; then
+               $SDB_SHELL "gdb - ${pid}"
+            else
+               echo "ERROR: No gdb on target"
+               if ask_yes_no "Do you want to install gdb? [y/n]"; then
+                  echo "Installing..."
+               fi
+            fi
+            break
+         else
+            echo -n "basename ${0}: Wait for launching process"
+            echo -ne "\r"
+         fi
+      else
+         echo -n "basename ${0}: Lost connection, Retrying"
+         echo -ne "\r"
+         conn=false
+      fi
+   fi
+done

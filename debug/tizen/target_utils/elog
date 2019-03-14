@@ -1,0 +1,11 @@
+#!/bin/bash
+
+enlightenment_info -eina_log_levels 5
+enlightenment_info -eina_log_path console > /dev/null 2>&1
+enlightenment_info -dlog 1 > /dev/null 2>&1
+
+if [[ $1 != "" ]]; then
+   dlogutil E20 | grep $1
+else
+   dlogutil E20
+fi

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+sdb root on
+sdb shell "mount -o remount,rw /"
+sdb shell "devicectl display stop"
+sdb shell

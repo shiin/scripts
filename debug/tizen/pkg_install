@@ -1,0 +1,14 @@
+#!/bin/bash
+
+source tizen.sh
+source util.sh
+
+echo "=== Device Rooting ==="
+${SDB_SHELL} root on > /dev/null 2>&1 || die "sdb: device connection error"
+${SDB_SHELL} mount -o remount,rw / || die "mount: failed to remount device"
+
+MODEL=`get_model`
+ARCH=`get_arch`
+SUB_ARCH=`get_sub_arch`
+PROFILE=`get_profile`
+SNAPSHOT_URL=`get_snapshot_url`

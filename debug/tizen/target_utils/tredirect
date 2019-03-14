@@ -1,0 +1,21 @@
+#!/bin/sh
+set -x
+
+PROGRAM=${1:-"enlightenment"}
+
+rm -rf /home/owner/redirect.gdb
+rm -rf /home/owner/tlog.1
+rm -rf /home/owner/tlog.2
+
+echo 'set $file1 = creat("/home/owner/tlog.1", 0600)' > /home/owner/redirect.gdb
+echo 'set $file2 = creat("/home/owner/tlog.2", 0600)' >> /home/owner/redirect.gdb
+echo 'call (int)dup2($file1, 1)' >> /home/owner/redirect.gdb
+echo 'call (int)dup2($file2, 2)' >> /home/owner/redirect.gdb
+echo 'quit' >> /home/owner/redirect.gdb
+
+PID=$(ps -ef |grep ${PROGRAM} | sed -e '/grep/d' | sed -e '/dbus/d' | awk '{print$2}')
+
+gdb -p $PID -x /home/owner/redirect.gdb
+
+tail -f /home/owner/tlog.1 &
+tail -f /home/owner/tlog.2 &

@@ -1,0 +1,50 @@
+#!/bin/bash
+
+source helper_color.sh
+source helper_tizen.sh
+
+trap "exit;" SIGINT
+
+##### User Configuration #####
+# 1) Set URL where you want to download image from.
+URL=http://165.213.149.200/download/public_mirror/tizen/unified/latest/images/standard/mobile-wayland-armv7l-tm1/
+##############################
+
+TEMP_DIR=$HOME/temp
+
+read -p "User: " USER
+read -sp "Password: " PASSWD
+
+DOWNLOAD_URL=`lynx -auth=${USER}:${PASSWD} -dump ${URL} | grep -E 'http.*tar\.gz' | awk '{print $2}'`
+FILE=`echo ${DOWNLOAD_URL} | awk -F / '{print $NF}'`
+
+echo_ "Download binary..."
+if [ ! -f ${TEMP_DIR}/${FILE} ]; then
+   wget --user=${USER} --password=${PASSWD} --directory-prefix=${TEMP_DIR} ${DOWNLOAD_URL} || die "Failed to download from ${DOWNLOAD_URL}"
+else
+   echo_ "   > Image binary is already exist." r
+fi
+
+echo_ "Install binary to target..."
+lthor ${TEMP_DIR}/${FILE} || die "Failed to install binary"
+
+# wait for finishing the target boot up.
+while [ 1 ]
+do
+   if is_connect; then
+      break
+   fi
+done
+
+### TODO
+
+# install gdb
+#insgdb
+
+# install debug package
+#debug_pkg_push.sh
+
+#sdb -d push $HOME/bin/ws-yeonjang/arm/redirect.sh /usr/bin/
+#sdb -d push $HOME/bin/scripts/utils/tm1-data/* /usr/bin/
+
+#rm $TEMP_DIR/$FILE
