@@ -2,7 +2,7 @@
 
 # NOTE: Only on Ubuntu 16.04
 
-sudo apt install minicom
+sudo apt install -y minicom
 
 grep "# For Tizen" /etc/apt/sources.list > /dev/null 2>&1
 if [ $? -ne 0 ]; then
@@ -17,15 +17,15 @@ if [ $? -ne 0 ]; then
     sudo sh -c 'echo "deb http://security.ubuntu.com/ubuntu xenial-security main'
 fi
 
-sudo apt update && sudo apt install gbs mic lthor
+sudo apt update && sudo apt install -y gbs mic lthor
 
 # For Tizen-Studio
-sudo apt install libpng12-0
+sudo apt install -y libpng12-0
 
 # For Tizen-IDE
 # wget https://developer.tizen.org/development/tizen-studio/download
-sudo apt install default-jdk libwebkitgtk-1.0-0
-sudo apt install bridge-utils openvpn
+sudo apt install -y default-jdk libwebkitgtk-1.0-0
+sudo apt install -y bridge-utils openvpn
 
 # Register Tizen source repository to PATH environment
 TIZEN_PATH=$HOME/repos/tizen

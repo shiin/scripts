@@ -247,30 +247,30 @@ E_MODULES=$@
 "
 
 # 2018-03-23 for wayland
-sudo apt install libffi-dev
+sudo apt install -y libffi-dev
 
 # 2018-03-23 for drm
-sudo apt install libpciaccess-dev
+sudo apt install -y libpciaccess-dev
 
 # 2018-03-23 for mesa
-sudo apt install libvdpau-dev libxvmc-dev libva-dev python-mako libelf-dev llvm-5.0-dev bison flex
+sudo apt install -y libvdpau-dev libxvmc-dev libva-dev python-mako libelf-dev llvm-5.0-dev bison flex
 
 # 2018-03-23 for libinput
-sudo apt install libmtdev-dev libwacom-dev doxygen-gui xdot
+sudo apt install -y libmtdev-dev libwacom-dev doxygen-gui xdot
 
 # X Server:
 
 # xserver: configure.ac:38: error: must install xorg-macros 1.14 or later before running autoconf/autogen
 # xserver: configure: error: Package requirements (glproto >= 1.4.17 gl >= 9.2.0) were not met:
-sudo apt install xutils-dev libgl1-mesa-dev
+sudo apt install -y xutils-dev libgl1-mesa-dev
 
 # checking for SHA1 implementation... configure: error: No suitable SHA1 implementation found
 # checking for SHA1Init in -lmd... no
-sudo apt install libmd-dev # no .pc file?
+sudo apt install -y libmd-dev # no .pc file?
 
 # configure: error: Package requirements (fixesproto >= 5.0 damageproto >= 1.1 xcmiscproto >= 1.2.0 xtrans >= 1.3.5 bigreqsproto >= 1.1.0 xproto >= 7.0.28 randrproto >= 1.5.0 renderproto >= 0.11 xextproto >= 7.2.99.901 inputproto >= 2.3 kbproto >= 1.0.3 fontsproto >= 2.1.3 pixman-1 >= 0.27.2 videoproto compositeproto >= 0.4 recordproto >= 1.13.99.1 scrnsaverproto >= 1.1 resourceproto >= 1.2.0 xf86driproto >= 2.1.0 glproto >= 1.4.17 dri >= 7.8.0 presentproto >= 1.0 xineramaproto
 # xkbfile  pixman-1 >= 0.27.2 xfont >= 1.4.2 xau xshmfence >= 1.1 xdmcp) were not met:
-sudo apt install x11proto-xcmisc-dev x11proto-bigreqs-dev x11proto-randr-dev \
+sudo apt install -y x11proto-xcmisc-dev x11proto-bigreqs-dev x11proto-randr-dev \
    x11proto-fonts-dev x11proto-video-dev x11proto-composite-dev \
    x11proto-record-dev x11proto-scrnsaver-dev x11proto-resource-dev \
    x11proto-xf86dri-dev x11proto-present-dev x11proto-xinerama-dev \
@@ -279,7 +279,7 @@ sudo apt install x11proto-xcmisc-dev x11proto-bigreqs-dev x11proto-randr-dev \
 # configure: error: Xwayland build explicitly requested, but required modules not found.
 # checking for XWAYLANDMODULES... no
 # XWAYLANDMODULES="wayland-client >= 1.3.0 libdrm epoxy"
-sudo apt install libepoxy-dev # this error message is uninformative
+sudo apt install -y libepoxy-dev # this error message is uninformative
 
 # For llvm-7 required by mesa - Ubuntu 16.04
 APT_FILE=/etc/apt/source.list
@@ -299,7 +299,7 @@ if [[ $? -ne 0 ]]; then
     sudo sh -c 'echo "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main" >> $APT_FILE'
     sudo sh -c 'echo "deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main" >> $APT_FILE'
 
-    sudo apt install libllvm-7-ocaml-dev libllvm7 llvm-7 llvm-7-dev llvm-7-doc llvm-7-examples llvm-7-runtime
+    sudo apt install -y libllvm-7-ocaml-dev libllvm7 llvm-7 llvm-7-dev llvm-7-doc llvm-7-examples llvm-7-runtime
 fi
 
 

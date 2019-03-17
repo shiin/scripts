@@ -31,14 +31,14 @@ if ask_yes_no "Do you want to execute command 'apt upgrade'? [y/n]"; then
     sudo apt upgrade
 fi
 
-sudo apt install autoconf autopoint ctags cscope gitk vim
+sudo apt install -y autoconf autopoint ctags cscope gitk vim
 
 # useful tools
-sudo apt install trash-cli curl lynx
-sudo apt install openssh-server # For using PuTTY & WinSCP in Windows
+sudo apt install -y trash-cli curl lynx
+sudo apt install -y openssh-server # For using PuTTY & WinSCP in Windows
 
 # Useful Applications
-sudo apt install chromium-browser gnome-tweak-tool unity-tweak-tool
+sudo apt install -y chromium-browser gnome-tweak-tool unity-tweak-tool
 
 # For ssl certification
 sed -e "s/\r//g" $DATA/SRnD_Web_Proxy.crt >> $SSL_CERT1
@@ -47,7 +47,7 @@ sed -e "s/\r//g" $DATA/SRnD_Web_Proxy.crt >> $SSL_CERT2
 echo "" >> $SSL_CERT2
 
 # meson - Updated on Ubuntu 16.04
-sudo apt install python-pip python3-pip
+sudo apt install -y python-pip python3-pip
 pip3 install meson
 
 # PATH
@@ -109,6 +109,6 @@ source ~/.bashrc
 # Add for Ubuntu 18.04
 
 # For adding shotcut for workspace
-sudo apt install xdotool
+sudo apt install -y xdotool
 
-sudo apt install net-tools
+sudo apt install -y net-tools
