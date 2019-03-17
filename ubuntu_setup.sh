@@ -94,7 +94,7 @@ curl 'http://vim-bootstrap.com/generate.vim' --data 'langs=c&langs=python&langs=
 
 # For cscope shorcut 'cscope_macros.vim'
 # Make sure there is plugin directory for vim and download 'cscope_macros.vim'
-if [ ! -d $HOME/.vim/plugin]; then
+if [ ! -d $HOME/.vim/plugin ]; then
     mkdir -p $HOME/.vim/plugin
 fi
 
