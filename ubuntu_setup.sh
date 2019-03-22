@@ -2,6 +2,7 @@
 
 DATA="$HOME/usr/data"
 BASH="$HOME/.bashrc"
+VIMRC="$HOME/.vimrc"
 SSL_CERT1="/etc/ssl/certs/ca-certificates.crt"
 SSL_CERT2="/home/prado/.local/lib/python3.5/site-packages/pip/_vendor/certifi/cacert.pem"
 
@@ -90,7 +91,18 @@ fi
 #     sh ~/.vim_runtime/install_awesome_vimrc.sh
 # fi
 
-curl 'http://vim-bootstrap.com/generate.vim' --data 'langs=c&langs=python&langs=javascript&langs=html&editor=vim' > ~/.vimrc
+# Update .vimrc
+curl 'http://vim-bootstrap.com/generate.vim' --data 'langs=c&langs=python&langs=javascript&langs=html&editor=vim' > $VIMRC
+
+MY_CONFIGURATION_SYM="\" My configuration"
+grep "${MY_CONFIGURATION_SYM}" $VIMRC > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "" >> $VIMRC
+    echo $MY_CONFIGURATION_SYM >> $VIMRC
+    echo "set updatetime=500" >> $VIMRC
+    echo "nnoremap <silent> <F5> :set ts=8 sw=3 sts=3 expandtab cino=>5n-3f0^-2{2(0W1st0)}<CR>" >> $VIMRC
+    echo "nnoremap <silent> <F6> :set autoindent noexpandtab tabstop=4 shiftwidth=4<CR>" >> $VIMRC
+fi
 
 # For cscope shorcut 'cscope_macros.vim'
 # Make sure there is plugin directory for vim and download 'cscope_macros.vim'
