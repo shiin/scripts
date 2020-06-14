@@ -2,7 +2,7 @@
 
 [ -z "$MAKEFLAGS" ]  && export MAKEFLAGS="-j 10 -l 10"
 [ -z "$MAKE" ]       && export MAKE="chrt --idle 0 make"
-[ -z "$REPO_DIR" ]    && export REPO_DIR="$HOME/repos/wayland"
+[ -z "$REPO_DIR" ]    && export REPO_DIR="$HOME/Workspace/git/wayland"
 
 ###
 ### Functions
@@ -107,7 +107,7 @@ function update()
 }
 
 function prepare_build() {
-   export WLD=$HOME/install
+   export WLD=$HOME/Workspace/install
    export LIBDIR=$WLD/lib
    export EXTRA_LIBDIR=$LIBDIR/x86_64-linux-gnu
    export SHAREDIR=$WLD/share
@@ -132,22 +132,13 @@ function build()
    local mod_path=$2
    local mod=$3
    local mod_config_options=""
-   local meson=false
    echo "Build $mod ..."
 
    _pushd $repo_path/$mod
 
-   if [[ -e meson.build ]]; then
-      meson=true
-   fi
-
-
    PREFIX="--prefix=$WLD"
 
    case $mod in
-      wayland )
-         mod_config_options="--disable-documentation"
-         ;;
       mesa )
          mod_config_options="-Dgles2=true \
             -Dplatforms=x11,wayland,drm -Dgbm=true -Dshared-glapi=true \
@@ -175,7 +166,7 @@ function build()
          ;;
    esac
 
-   if [[ "$meson" == true ]]; then
+   if [[ -e meson.build ]]; then
       meson . build $PREFIX $mod_config_options >> build.log 2>&1 || die "meson: error running build"
       ninja -C build >> build.log 2>&1 || die "ninja: error running build"
       sudo ninja -C build install 2>&1 || die "ninja: error running install"
@@ -188,7 +179,7 @@ function build()
          ./configure $PREFIX $mod_config_options >> build.log 2>&1 || die "$mod: error running configure"
       fi
       $MAKE >> build.log 2>&1 || die "$mod: error building"
-      $MAKE -j 1 install >> build.log 2>&1 || die "$mod: error installing"
+      sudo $MAKE -j 1 install >> build.log 2>&1 || die "$mod: error installing"
    fi
 
    _popd
@@ -239,69 +230,81 @@ function run_all()
    done
 }
 
+function apt_install()
+{
+    for pkg in $1
+    do
+        dpkg -l $pkg > /dev/null 2>&1
+        if [[ $? -ne 0 ]]; then
+            apt_install $pkg
+        fi
+    done
+}
+
+if [[ -z $NO_UPDATE ]]; then
+	# 2018-03-23 for wayland
+    apt_install libffi-dev
+
+    # 2018-03-23 for drm
+    apt_install libpciaccess-dev
+
+    # 2018-03-23 for mesa
+    apt_install libvdpau-dev libxvmc-dev libva-dev python-mako libelf-dev llvm-5.0-dev bison flex
+
+    # 2018-03-23 for libinput
+    apt_install libmtdev-dev libwacom-dev doxygen-gui xdot
+
+    # X Server:
+
+    # xserver: configure.ac:38: error: must install xorg-macros 1.14 or later before running autoconf/autogen
+    # xserver: configure: error: Package requirements (glproto >= 1.4.17 gl >= 9.2.0) were not met:
+    apt_install xutils-dev libgl1-mesa-dev
+
+    # checking for SHA1 implementation... configure: error: No suitable SHA1 implementation found
+    # checking for SHA1Init in -lmd... no
+    apt_install libmd-dev # no .pc file?
+
+    # configure: error: Package requirements (fixesproto >= 5.0 damageproto >= 1.1 xcmiscproto >= 1.2.0 xtrans >= 1.3.5 bigreqsproto >= 1.1.0 xproto >= 7.0.28 randrproto >= 1.5.0 renderproto >= 0.11 xextproto >= 7.2.99.901 inputproto >= 2.3 kbproto >= 1.0.3 fontsproto >= 2.1.3 pixman-1 >= 0.27.2 videoproto compositeproto >= 0.4 recordproto >= 1.13.99.1 scrnsaverproto >= 1.1 resourceproto >= 1.2.0 xf86driproto >= 2.1.0 glproto >= 1.4.17 dri >= 7.8.0 presentproto >= 1.0 xineramaproto
+    # xkbfile  pixman-1 >= 0.27.2 xfont >= 1.4.2 xau xshmfence >= 1.1 xdmcp) were not met:
+    apt_install x11proto-xcmisc-dev x11proto-bigreqs-dev x11proto-randr-dev \
+        x11proto-fonts-dev x11proto-video-dev x11proto-composite-dev \
+        x11proto-record-dev x11proto-scrnsaver-dev x11proto-resource-dev \
+        x11proto-xf86dri-dev x11proto-present-dev x11proto-xinerama-dev \
+        libxkbfile-dev libxfont-dev libpixman-1-dev x11proto-render-dev
+
+    # configure: error: Xwayland build explicitly requested, but required modules not found.
+    # checking for XWAYLANDMODULES... no
+    # XWAYLANDMODULES="wayland-client >= 1.3.0 libdrm epoxy"
+    apt_install libepoxy-dev # this error message is uninformative
+
+    # For wayland
+    apt_install libxml2-dev
+
+    # For wayland documentation
+    apt_install xmlto
+
+    # For mesa - Ubuntu 20.04
+    sudo apt install llvm-10-dev libxcb-glx0-dev libxcb-dri2-0-dev libxcb-present-dev libxshmfence-dev
+
+    # For sphinx-build required by libinput - 20200614
+    sudo apt install python3-recommonmark python3-sphinx python3-sphinx-rtd-theme
+
+    # For weston - 20200614
+    sudo apt libpipewire-0.2-dev libpango1.0-dev
+fi
+
 E_MODULES=$@
 
 [ -z "$E_MODULES" ] && E_MODULES=" \
+   wayland \
+   wayland-protocols \
+   drm \
+   mesa \
+   libevdev \
+   libinput \
    libunwind \
    weston \
 "
-
-# 2018-03-23 for wayland
-sudo apt install -y libffi-dev
-
-# 2018-03-23 for drm
-sudo apt install -y libpciaccess-dev
-
-# 2018-03-23 for mesa
-sudo apt install -y libvdpau-dev libxvmc-dev libva-dev python-mako libelf-dev llvm-5.0-dev bison flex
-
-# 2018-03-23 for libinput
-sudo apt install -y libmtdev-dev libwacom-dev doxygen-gui xdot
-
-# X Server:
-
-# xserver: configure.ac:38: error: must install xorg-macros 1.14 or later before running autoconf/autogen
-# xserver: configure: error: Package requirements (glproto >= 1.4.17 gl >= 9.2.0) were not met:
-sudo apt install -y xutils-dev libgl1-mesa-dev
-
-# checking for SHA1 implementation... configure: error: No suitable SHA1 implementation found
-# checking for SHA1Init in -lmd... no
-sudo apt install -y libmd-dev # no .pc file?
-
-# configure: error: Package requirements (fixesproto >= 5.0 damageproto >= 1.1 xcmiscproto >= 1.2.0 xtrans >= 1.3.5 bigreqsproto >= 1.1.0 xproto >= 7.0.28 randrproto >= 1.5.0 renderproto >= 0.11 xextproto >= 7.2.99.901 inputproto >= 2.3 kbproto >= 1.0.3 fontsproto >= 2.1.3 pixman-1 >= 0.27.2 videoproto compositeproto >= 0.4 recordproto >= 1.13.99.1 scrnsaverproto >= 1.1 resourceproto >= 1.2.0 xf86driproto >= 2.1.0 glproto >= 1.4.17 dri >= 7.8.0 presentproto >= 1.0 xineramaproto
-# xkbfile  pixman-1 >= 0.27.2 xfont >= 1.4.2 xau xshmfence >= 1.1 xdmcp) were not met:
-sudo apt install -y x11proto-xcmisc-dev x11proto-bigreqs-dev x11proto-randr-dev \
-   x11proto-fonts-dev x11proto-video-dev x11proto-composite-dev \
-   x11proto-record-dev x11proto-scrnsaver-dev x11proto-resource-dev \
-   x11proto-xf86dri-dev x11proto-present-dev x11proto-xinerama-dev \
-   libxkbfile-dev libxfont-dev libpixman-1-dev x11proto-render-dev
-
-# configure: error: Xwayland build explicitly requested, but required modules not found.
-# checking for XWAYLANDMODULES... no
-# XWAYLANDMODULES="wayland-client >= 1.3.0 libdrm epoxy"
-sudo apt install -y libepoxy-dev # this error message is uninformative
-
-# For llvm-7 required by mesa - Ubuntu 16.04
-APT_FILE=/etc/apt/source.list
-LLVM_SYM="# For llvm"
-
-grep ${LLVM_SYM} ${APT_FILE} > /dev/null 2>&1
-if [[ $? -ne 0 ]]; then
-    wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add
-
-    sudo sh -c 'echo "# For llvm-7" >> $APT_FILE"'
-    sudo sh -c 'echo "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial main" >> $APT_FILE'
-    sudo sh -c 'echo "deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial main" >> $APT_FILE'
-    # 6
-    sudo sh -c 'echo "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main" >> $APT_FILE'
-    sudo sh -c 'echo "deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main" >> $APT_FILE'
-    # 7
-    sudo sh -c 'echo "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main" >> $APT_FILE'
-    sudo sh -c 'echo "deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main" >> $APT_FILE'
-
-    sudo apt install -y libllvm-7-ocaml-dev libllvm7 llvm-7 llvm-7-dev llvm-7-doc llvm-7-examples llvm-7-runtime
-fi
-
 
 if [ -z "$NO_CLEANUP" ]; then
    run_all cleanup
